@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/GoExport/GoExport-Extension/refs/heads/main/assets/banner.png?token=GHSAT0AAAAAAC6QSYQQNGQ3IODMOZHTQCIW2IDXEQA" alt="GoExport Extension Banner" width="100%"/>
+<img src="https://github.com/GoExport/GoExport-Extension/blob/main/assets/banner.png" alt="GoExport Extension Banner" width="100%"/>
 
 # GoExport Extension
 
