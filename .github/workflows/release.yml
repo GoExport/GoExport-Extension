@@ -1,0 +1,101 @@
+name: Build and Release CRX
+
+on:
+  push:
+    tags:
+      - "v*"
+  release:
+    types: [created]
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+
+      - name: Get version from tag or release
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}"
+
+      - name: Install crx3 package
+        run: npm install -g crx3
+
+      - name: Create private key file
+        run: echo "${{ secrets.CRX_PRIVATE_KEY }}" > private-key.pem
+
+      - name: Prepare extension files
+        run: |
+          mkdir -p build
+          # Copy all extension files except workflow files, git files, and README
+          rsync -av --exclude='.git*' --exclude='*.md' --exclude='build' --exclude='*.pem' ./ build/
+
+      - name: Build CRX file
+        run: |
+          npx crx3 build/GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.crx -p private-key.pem build/
+          ls -lh build/
+
+      - name: Create ZIP archive (for manual installation)
+        run: |
+          cd build
+          zip -r ../GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.zip . -x "*.crx"
+          cd ..
+
+      - name: Generate SHA256 checksums
+        run: |
+          sha256sum build/GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.crx > checksums.txt
+          sha256sum GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.zip >> checksums.txt
+          cat checksums.txt
+
+      - name: Upload CRX to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            build/GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.crx
+            GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.zip
+            checksums.txt
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## GoExport Chrome Extension Release ${{ steps.get_version.outputs.VERSION }}
+
+            ### Installation Instructions
+
+            **Option 1: CRX File (Recommended for Chrome 87)**
+            1. Download `GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.crx`
+            2. Open Chrome and navigate to `chrome://extensions/`
+            3. Enable "Developer mode" (top-right toggle)
+            4. Drag and drop the `.crx` file onto the extensions page
+
+            **Option 2: ZIP File (Manual Installation)**
+            1. Download `GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.zip`
+            2. Extract the ZIP file to a folder
+            3. Open Chrome and navigate to `chrome://extensions/`
+            4. Enable "Developer mode" (top-right toggle)
+            5. Click "Load unpacked" and select the extracted folder
+
+            ### What's Included
+            - **GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.crx**: Packaged Chrome extension (Manifest V2)
+            - **GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.zip**: Unpacked extension files for manual installation
+            - **checksums.txt**: SHA256 checksums for verification
+
+            ### Requirements
+            - Chrome 87 or compatible Chromium-based browser
+            - GoExport desktop application installed with protocol handler configured
+
+            ### Compatibility
+            This is a Manifest V2 extension designed for legacy Chrome versions (v87). It integrates FlashThemes.net with the GoExport desktop application.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
