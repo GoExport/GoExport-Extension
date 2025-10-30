@@ -1,0 +1,22 @@
+{
+  "manifest_version": 2,
+  "name": "GoExport Chrome Extension",
+  "version": "1.0.0",
+  "description": "Adds a direct link to GoExport on FlashThemes.",
+  "content_scripts": [
+    {
+      "matches": ["*://flashthemes.net/movie/*"],
+      "js": ["ft/player.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "permissions": ["tabs", "activeTab", "storage"],
+  "options_page": "options.html",
+  "icons": {
+    "48": "icon.png"
+  }
+}

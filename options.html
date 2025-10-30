@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GoExport Chrome Extension Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>GoExport Chrome Extension Settings</h1>
+
+      <div class="settings-section">
+        <p class="section-description">
+          These settings integrate into GoExport. Make sure you have it
+          installed and added to your path.
+        </p>
+
+        <!-- Aspect Ratio -->
+        <div class="setting-item">
+          <label for="aspectRatio">Aspect Ratio</label>
+          <select id="aspectRatio">
+            <option value="4:3">Standard (4:3)</option>
+            <option value="14:9">Classic (14:9)</option>
+            <option value="16:9">Widescreen (16:9)</option>
+            <option value="9:16">Vertical (9:16)</option>
+          </select>
+          <p class="setting-description">
+            The aspect ratio determines how wide your video should be. Default
+            is 16:9 (widescreen).
+          </p>
+        </div>
+
+        <!-- Resolution -->
+        <div class="setting-item">
+          <label for="resolution">Resolution</label>
+          <select id="resolution">
+            <!-- Options populated dynamically based on aspect ratio -->
+          </select>
+          <p class="setting-description">
+            The resolution is based on aspect ratio and determines how big the
+            frame of the video should be. Default is 720p.
+          </p>
+        </div>
+
+        <!-- Open Folder After Export -->
+        <div class="setting-item">
+          <label for="openFolder">
+            <input type="checkbox" id="openFolder" />
+            Open folder after export
+          </label>
+          <p class="setting-description">
+            Automatically open the destination folder after GoExport completes.
+          </p>
+        </div>
+
+        <!-- Use Outro -->
+        <div class="setting-item">
+          <label for="useOutro">
+            <input type="checkbox" id="useOutro" />
+            Add outro to exported videos
+          </label>
+          <p class="setting-description">
+            GoExport will add an outro to exported videos when enabled.
+          </p>
+        </div>
+
+        <!-- Add more settings here in the future -->
+      </div>
+
+      <div class="button-container">
+        <button id="save">Save Settings</button>
+        <span id="status" class="status"></span>
+      </div>
+    </div>
+
+    <script src="options.js"></script>
+  </body>
+</html>
