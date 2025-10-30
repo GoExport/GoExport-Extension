@@ -1,6 +1,6 @@
 <img src="https://github.com/GoExport/GoExport-Extension/blob/main/assets/banner.png" alt="GoExport Extension Banner" width="100%"/>
 
-# GoExport Extension
+# GoExport Chrome Extension
 
 A Chrome extension that adds a direct link to GoExport on FlashThemes pages.
 
