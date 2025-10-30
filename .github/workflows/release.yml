@@ -40,24 +40,25 @@ jobs:
       - name: Prepare extension files
         run: |
           mkdir -p build
+          mkdir -p extension-source
           # Copy all extension files except workflow files, git files, and README
-          rsync -av --exclude='.git*' --exclude='*.md' --exclude='build' --exclude='*.pem' ./ build/
+          rsync -av --exclude='.git*' --exclude='*.md' --exclude='build' --exclude='extension-source' --exclude='*.pem' ./ extension-source/
 
       - name: Build CRX file
         run: |
-          npx crx3 build/GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.crx -p private-key.pem build/
+          npx crx3 -p private-key.pem extension-source/ -o build/GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.crx
           ls -lh build/
 
       - name: Create ZIP archive (for manual installation)
         run: |
-          cd build
-          zip -r ../GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.zip . -x "*.crx"
+          cd extension-source
+          zip -r ../build/GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.zip .
           cd ..
 
       - name: Generate SHA256 checksums
         run: |
           sha256sum build/GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.crx > checksums.txt
-          sha256sum GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.zip >> checksums.txt
+          sha256sum build/GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.zip >> checksums.txt
           cat checksums.txt
 
       - name: Upload CRX to release
@@ -65,7 +66,7 @@ jobs:
         with:
           files: |
             build/GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.crx
-            GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.zip
+            build/GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.zip
             checksums.txt
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           body: |
