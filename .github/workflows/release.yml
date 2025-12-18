@@ -31,8 +31,8 @@ jobs:
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
           echo "Version: ${VERSION}"
 
-      - name: Install crx3 package
-        run: npm install -g crx3@2.0.0
+      - name: Install crx package
+        run: npm install -g crx@5.0.1
 
       - name: Create private key file
         run: echo "${{ secrets.CRX_PRIVATE_KEY }}" > private-key.pem
@@ -46,7 +46,7 @@ jobs:
 
       - name: Build CRX file
         run: |
-          npx crx3 -p private-key.pem extension-source/ -o build/GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.crx
+          npx crx pack extension-source/ -p private-key.pem -o build/GoExport-Extension-${{ steps.get_version.outputs.VERSION }}.crx
           ls -lh build/
 
       - name: Create ZIP archive (for manual installation)
