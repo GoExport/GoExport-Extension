@@ -32,7 +32,7 @@ jobs:
           echo "Version: ${VERSION}"
 
       - name: Install crx3 package
-        run: npm install -g crx3
+        run: npm install -g crx3@2.0.0
 
       - name: Create private key file
         run: echo "${{ secrets.CRX_PRIVATE_KEY }}" > private-key.pem
