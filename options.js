@@ -4,6 +4,7 @@ const DEFAULT_SETTINGS = {
   resolution: "720p",
   openFolder: false,
   useOutro: true,
+  requireOBS: false,
   // Add more default settings here as needed
 };
 
@@ -88,6 +89,7 @@ function loadSettings() {
     // Set checkboxes
     document.getElementById("openFolder").checked = items.openFolder;
     document.getElementById("useOutro").checked = items.useOutro;
+    document.getElementById("requireOBS").checked = items.requireOBS;
   });
 }
 
@@ -98,6 +100,7 @@ function saveSettings() {
     resolution: document.getElementById("resolution").value,
     openFolder: document.getElementById("openFolder").checked,
     useOutro: document.getElementById("useOutro").checked,
+    requireOBS: document.getElementById("requireOBS").checked,
   };
 
   chrome.storage.sync.set(settings, function () {

@@ -52,7 +52,9 @@ function launchGoExport(movieId, movieOwnerId, isWide, settings) {
       "&open_folder=" +
       (settings.openFolder ? "1" : "0") +
       "&use_outro=" +
-      (settings.useOutro ? "1" : "0");
+      (settings.useOutro ? "1" : "0") +
+      "&obs_required=" +
+      (settings.requireOBS ? "1" : "0");
     console.log("Navigating to GoExport URL:", goExportUrl);
     window.location.href = goExportUrl;
   };
@@ -67,6 +69,7 @@ window.addEventListener("load", function () {
       resolution: "720p",
       openFolder: false,
       useOutro: true,
+      requireOBS: false,
     },
     function (settings) {
       console.log("Loaded settings:", settings);
