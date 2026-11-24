@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -30,6 +32,45 @@ jobs:
           fi
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
           echo "Version: ${VERSION}"
+
+      # Each major version lives on its own branch: v1.x.x tags must point at a
+      # commit on the 1.x branch, v2.x.x tags at a commit on 2.x, and so on.
+      - name: Verify tag is on its release branch
+        id: release_branch
+        env:
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
+        run: |
+          if [[ ! "$VERSION" =~ ^v([0-9]+)\.[0-9]+\.[0-9]+([-+].*)?$ ]]; then
+            echo "::error::Tag '$VERSION' is not of the form vMAJOR.MINOR.PATCH"
+            exit 1
+          fi
+          MAJOR="${BASH_REMATCH[1]}"
+          BRANCH="${MAJOR}.x"
+          echo "BRANCH=${BRANCH}" >> $GITHUB_OUTPUT
+
+          if ! git fetch --no-tags origin "refs/heads/${BRANCH}:refs/remotes/origin/${BRANCH}"; then
+            echo "::error::Release branch '${BRANCH}' does not exist for tag '$VERSION'"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" "origin/${BRANCH}"; then
+            echo "::error::Tag '$VERSION' ($GITHUB_SHA) is not on branch '${BRANCH}'. Tag a commit from ${BRANCH} instead."
+            exit 1
+          fi
+          echo "Building $VERSION from branch $BRANCH"
+
+      - name: Set manifest version from tag
+        env:
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
+        run: |
+          # Chrome only accepts dotted numbers, so drop the "v" and any -suffix/+build.
+          MANIFEST_VERSION="$(echo "${VERSION#v}" | sed -E 's/[-+].*$//')"
+          node -e '
+            const fs = require("fs");
+            const m = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+            m.version = process.argv[1];
+            fs.writeFileSync("manifest.json", JSON.stringify(m, null, 2) + "\n");
+          ' "$MANIFEST_VERSION"
+          grep '"version"' manifest.json
 
       - name: Install crx package
         run: npm install -g crx@5.0.1
@@ -71,6 +112,8 @@ jobs:
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           body: |
             ## GoExport Chrome Extension Release ${{ steps.get_version.outputs.VERSION }}
+
+            Built from the `${{ steps.release_branch.outputs.BRANCH }}` branch.
 
             ### Installation Instructions
 

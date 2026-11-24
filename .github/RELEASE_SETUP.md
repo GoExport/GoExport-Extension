@@ -47,7 +47,25 @@ If you don't have OpenSSL, you can:
 - Add `*.pem` to your `.gitignore` file to prevent accidental commits
 - Store a backup of this key file securely - you'll need the same key for future releases to maintain the same extension ID
 
+## Release Branches
+
+Each major version of the extension is maintained on its own branch:
+
+| Branch | Tags        | Works with  |
+| ------ | ----------- | ----------- |
+| `1.x`  | `v1.x.x`    | GoExport v1 |
+| `2.x`  | `v2.x.x`    | GoExport v2 |
+
+`2.x` is the default branch. The workflow reads the major version from the tag
+and only builds when the tagged commit is on the matching branch (`v1.4.0` must
+be on `1.x`, `v2.1.0` on `2.x`). Otherwise the run fails before building. The
+`version` in `manifest.json` is set from the tag at build time, so you don't
+need to bump it by hand.
+
 ## Step 3: Create a Release
+
+Check out the branch for the major version you're releasing first, e.g.
+`git checkout 1.x` before tagging `v1.2.0`.
 
 The workflow will automatically trigger when you:
 
