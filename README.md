@@ -1,4 +1,4 @@
-<img src="https://github.com/GoExport/GoExport-Extension/blob/main/assets/banner.png" alt="GoExport Extension Banner" width="100%"/>
+<img src="https://github.com/GoExport/GoExport-Extension/blob/2.x/assets/banner.png" alt="GoExport Extension Banner" width="100%"/>
 
 # GoExport Chrome Extension
 
@@ -17,9 +17,17 @@ A Chrome extension that adds a direct link to GoExport on FlashThemes pages.
 4. Drag and drop the downloaded CRX file onto the extensions page to install it.
 5. Configure the extension settings by clicking on "Details" under the GoExport Extension and then "Extension options".
 
+## Versions
+
+| Extension | Branch | Works with |
+| --------- | ------ | ---------- |
+| 2.x       | `2.x`  | GoExport v2 (`goexport://record?...` links) |
+| 1.x       | `1.x`  | GoExport v1 |
+
 ## Key Details
 
-- GoExport must be installed and added to your system PATH and you must have registered a protocol handler (This is handled with the Windows installer, but not for Linux; see the [documentation](https://github.com/GoExport/GoExport/tree/main/docs)) for the extension to function correctly.
+- GoExport v2 must be installed and its URL protocol registered with `GoExport install protocol` (see the [URL protocol wiki page](https://github.com/GoExport/GoExport/wiki/URL%E2%80%90Protocol)).
+- The export button sends the movie ID, the owner's user ID, your resolution, format, widescreen and outro choices, and every server setting from GoExport's FlashThemes preset (`url`, `api_url`, `swf_url`, `store_path`, `client_theme_path`). GoExport shows these and asks you to confirm before recording.
 - In order to modify GoExport settings from the extension options page, right click on the GoExport (mouse) icon in the Chrome toolbar and select "Options".
 
 ## Support

@@ -12,45 +12,63 @@
 
       <div class="settings-section">
         <p class="section-description">
-          These settings integrate into GoExport. Make sure you have it
-          installed and added to your path.
+          These settings are sent to GoExport v2 through its
+          <code>goexport://</code> link. Make sure GoExport is installed and
+          its URL protocol is registered (<code>GoExport install protocol</code>).
         </p>
-
-        <!-- Aspect Ratio -->
-        <div class="setting-item">
-          <label for="aspectRatio">Aspect Ratio</label>
-          <select id="aspectRatio">
-            <option value="4:3">Standard (4:3)</option>
-            <option value="14:9">Classic (14:9)</option>
-            <option value="16:9">Widescreen (16:9)</option>
-            <option value="9:16">Vertical (9:16)</option>
-          </select>
-          <p class="setting-description">
-            The aspect ratio determines how wide your video should be. Default
-            is 16:9 (widescreen).
-          </p>
-        </div>
 
         <!-- Resolution -->
         <div class="setting-item">
-          <label for="resolution">Resolution</label>
-          <select id="resolution">
-            <!-- Options populated dynamically based on aspect ratio -->
+          <label for="resolutionPreset">Resolution</label>
+          <select id="resolutionPreset">
+            <optgroup label="Widescreen (16:9)">
+              <option value="640x360">640x360 (360p)</option>
+              <option value="854x480">854x480 (480p)</option>
+              <option value="1280x720">1280x720 (720p, Recommended)</option>
+              <option value="1920x1080">1920x1080 (1080p)</option>
+              <option value="2560x1440">2560x1440 (1440p)</option>
+              <option value="3840x2160">3840x2160 (4K)</option>
+            </optgroup>
+            <optgroup label="Standard (4:3)">
+              <option value="640x480">640x480 (480p)</option>
+              <option value="960x720">960x720 (720p)</option>
+              <option value="1440x1080">1440x1080 (1080p)</option>
+            </optgroup>
+            <option value="custom">Custom…</option>
           </select>
+          <input
+            type="text"
+            id="resolutionCustom"
+            placeholder="WIDTHxHEIGHT, e.g. 1920x1080"
+            hidden
+          />
           <p class="setting-description">
-            The resolution is based on aspect ratio and determines how big the
-            frame of the video should be. Default is 720p.
+            Size of the exported video in pixels. Default is 1280x720.
           </p>
         </div>
 
-        <!-- Open Folder After Export -->
+        <!-- Format -->
         <div class="setting-item">
-          <label for="openFolder">
-            <input type="checkbox" id="openFolder" />
-            Open folder after export
-          </label>
+          <label for="videoFormat">Format</label>
+          <select id="videoFormat">
+            <option value="mp4">MP4 (Recommended)</option>
+            <option value="mov">MOV</option>
+            <option value="mkv">MKV</option>
+          </select>
+          <p class="setting-description">Container of the exported file.</p>
+        </div>
+
+        <!-- Widescreen -->
+        <div class="setting-item">
+          <label for="wideMode">Widescreen</label>
+          <select id="wideMode">
+            <option value="auto">Match the movie (Recommended)</option>
+            <option value="on">Always widescreen</option>
+            <option value="off">Never widescreen</option>
+          </select>
           <p class="setting-description">
-            Automatically open the destination folder after GoExport completes.
+            Whether the player records in widescreen. "Match the movie" uses the
+            movie's own setting on FlashThemes.
           </p>
         </div>
 
@@ -64,20 +82,45 @@
             GoExport will add an outro to exported videos when enabled.
           </p>
         </div>
+      </div>
 
-        <!-- Require OBS -->
+      <details class="settings-section advanced">
+        <summary>Advanced: FlashThemes servers</summary>
+        <p class="section-description">
+          These match GoExport's FlashThemes preset and are sent with every
+          export. Only change them if FlashThemes moves its files. Placeholders
+          like <code>&lt;store&gt;</code>, <code>&lt;client_theme&gt;</code> and
+          <code>{user_id}</code> are filled in by GoExport. Leave a field blank
+          to use the default.
+        </p>
+
         <div class="setting-item">
-          <label for="requireOBS">
-            <input type="checkbox" id="requireOBS" />
-            Require OBS to be running
-          </label>
-          <p class="setting-description">
-            Ensures that OBS is running before starting the export process.
-          </p>
+          <label for="server_url">Site URL (<code>url</code>)</label>
+          <input type="text" id="server_url" spellcheck="false" />
+        </div>
+        <div class="setting-item">
+          <label for="server_api_url">API URL (<code>api_url</code>)</label>
+          <input type="text" id="server_api_url" spellcheck="false" />
+        </div>
+        <div class="setting-item">
+          <label for="server_swf_url">Player SWF (<code>swf_url</code>)</label>
+          <input type="text" id="server_swf_url" spellcheck="false" />
+        </div>
+        <div class="setting-item">
+          <label for="server_store_path">Store path (<code>store_path</code>)</label>
+          <input type="text" id="server_store_path" spellcheck="false" />
+        </div>
+        <div class="setting-item">
+          <label for="server_client_theme_path"
+            >Client theme path (<code>client_theme_path</code>)</label
+          >
+          <input type="text" id="server_client_theme_path" spellcheck="false" />
         </div>
 
-        <!-- Add more settings here in the future -->
-      </div>
+        <button id="resetServers" type="button" class="secondary">
+          Reset servers to FlashThemes defaults
+        </button>
+      </details>
 
       <div class="button-container">
         <button id="save">Save Settings</button>
@@ -85,6 +128,7 @@
       </div>
     </div>
 
+    <script src="goexport.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

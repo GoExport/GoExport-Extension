@@ -32,62 +32,37 @@ function GatherVariables() {
   return movieData;
 }
 
-function launchGoExport(movieId, movieOwnerId, isWide, settings) {
-  // Use the aspect ratio from settings, or fall back to isWide logic
-  var aspect_ratio = settings.aspectRatio || (isWide === "1" ? "16:9" : "14:9");
-
-  // Send the user to goexport://?video_id=...&owner_id=...
+function launchGoExport(movie, settings) {
   return function () {
-    var goExportUrl =
-      "goexport://?video_id=" +
-      encodeURIComponent(movieId) +
-      "&user_id=" +
-      encodeURIComponent(movieOwnerId) +
-      "&service=ft" +
-      "&no_input=1" +
-      "&aspect_ratio=" +
-      encodeURIComponent(aspect_ratio) +
-      "&resolution=" +
-      encodeURIComponent(settings.resolution) +
-      "&open_folder=" +
-      (settings.openFolder ? "1" : "0") +
-      "&use_outro=" +
-      (settings.useOutro ? "1" : "0") +
-      "&obs_required=" +
-      (settings.requireOBS ? "1" : "0");
-    console.log("Navigating to GoExport URL:", goExportUrl);
-    window.location.href = goExportUrl;
+    var result = GoExport.buildRecordUrl(movie, settings);
+    if (result.error) {
+      console.error("GoExport:", result.error);
+      alert("GoExport: " + result.error);
+      return;
+    }
+    console.log("Navigating to GoExport URL:", result.url);
+    window.location.href = result.url;
   };
 }
 
 // Wait for the page to fully load before touching the DOM
 window.addEventListener("load", function () {
-  // Load settings from Chrome storage with all GoExport settings
-  chrome.storage.sync.get(
-    {
-      aspectRatio: "16:9",
-      resolution: "720p",
-      openFolder: false,
-      useOutro: true,
-      requireOBS: false,
-    },
-    function (settings) {
-      console.log("Loaded settings:", settings);
+  chrome.storage.sync.get(GOEXPORT_DEFAULT_SETTINGS, function (settings) {
+    console.log("Loaded settings:", settings);
 
-      // Initial variables
-      var movieData = GatherVariables();
-      var movieId = movieData["movieId"];
-      var movieOwnerId = movieData["movieOwnerId"];
-      var wide = movieData["isWide"];
+    var movieData = GatherVariables();
+    var movie = {
+      movieId: movieData["movieId"],
+      ownerId: movieData["movieOwnerId"],
+      isWide: movieData["isWide"],
+    };
 
-      // Pass settings to the button creation logic
-      createGoExportButton(movieId, movieOwnerId, wide, settings);
-    }
-  );
+    createGoExportButton(movie, settings);
+  });
 });
 
 // Create a single button that uses the user's saved settings
-function createGoExportButton(movieId, movieOwnerId, wide, settings) {
+function createGoExportButton(movie, settings) {
   // Find the container that holds the action buttons
   var container = document.querySelector("#movie_actions .actions");
   if (!container) {
@@ -105,12 +80,17 @@ function createGoExportButton(movieId, movieOwnerId, wide, settings) {
   newButton.className = "movie_action_button";
   newButton.id = "goexport_integration_button";
   newButton.href = "javascript:void(0);";
-  newButton.onclick = launchGoExport(movieId, movieOwnerId, wide, settings);
+  newButton.onclick = launchGoExport(movie, settings);
 
   // Tooltip for hover
   var tooltip = document.createElement("div");
   tooltip.className = "tooltip";
-  tooltip.textContent = "Export with GoExport (" + settings.resolution + ")";
+  tooltip.textContent =
+    "Export with GoExport (" +
+    settings.videoResolution +
+    ", " +
+    String(settings.videoFormat).toUpperCase() +
+    ")";
 
   // Append the export button to the container
   newButton.appendChild(tooltip);

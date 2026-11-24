@@ -1,113 +1,99 @@
-// Default settings structure - easily expandable
-const DEFAULT_SETTINGS = {
-  aspectRatio: "16:9",
-  resolution: "720p",
-  openFolder: false,
-  useOutro: true,
-  requireOBS: false,
-  // Add more default settings here as needed
-};
+// GOEXPORT_DEFAULT_SETTINGS, GOEXPORT_FLASHTHEMES_SERVERS, GOEXPORT_SERVER_KEYS
+// and GoExport come from goexport.js.
 
-// Resolution options for different aspect ratios (matching Wrapper: Offline)
-const resolutionOptions = {
-  "16:9": {
-    "360p": "360p",
-    "480p": "480p",
-    "720p": "720p (Recommended)",
-    "1080p": "1080p",
-    "2k": "2K",
-    "4k": "4K",
-    "5k": "5K",
-    "8k": "8K",
-  },
-  "14:9": {
-    "360p": "360p",
-    "480p": "480p",
-    "720p": "720p (Recommended)",
-    "1080p": "1080p",
-    "2k": "2K",
-    "4k": "4K",
-    "5k": "5K",
-    "8k": "8K",
-  },
-  "9:16": {
-    "360p": "360p",
-    "480p": "480p",
-    "720p": "720p (Recommended)",
-    "1080p": "1080p",
-    "2k": "2K",
-    "4k": "4K",
-    "5k": "5K",
-    "8k": "8K",
-  },
-  "4:3": {
-    "240p": "240p",
-    "360p": "360p",
-    "420p": "420p",
-    "480p": "480p (Recommended)",
-  },
-};
-
-// Function to update resolution options based on aspect ratio
-function updateResolutionOptions(aspectRatio, currentResolution) {
-  const resolutionSelect = document.getElementById("resolution");
-  const options = resolutionOptions[aspectRatio];
-
-  // Clear current options
-  resolutionSelect.innerHTML = "";
-
-  // Add new options
-  for (const [value, label] of Object.entries(options)) {
-    const option = document.createElement("option");
-    option.value = value;
-    option.textContent = label;
-    resolutionSelect.appendChild(option);
-  }
-
-  // Try to maintain the current selection if it exists in new options
-  let newValue;
-  if (options[currentResolution]) {
-    newValue = currentResolution;
-  } else {
-    // Default to 720p if available, otherwise first option
-    newValue = options["720p"] ? "720p" : Object.keys(options)[0];
-  }
-
-  resolutionSelect.value = newValue;
-  return newValue;
+function $(id) {
+  return document.getElementById(id);
 }
 
-// Load settings from Chrome storage
-function loadSettings() {
-  chrome.storage.sync.get(DEFAULT_SETTINGS, function (items) {
-    // Set aspect ratio
-    document.getElementById("aspectRatio").value = items.aspectRatio;
+function hasPreset(resolution) {
+  return !!document.querySelector(
+    '#resolutionPreset option[value="' + resolution + '"]'
+  );
+}
 
-    // Update resolution options and set the value
-    updateResolutionOptions(items.aspectRatio, items.resolution);
+function setResolution(resolution) {
+  if (hasPreset(resolution) && resolution !== "custom") {
+    $("resolutionPreset").value = resolution;
+    $("resolutionCustom").value = "";
+  } else {
+    $("resolutionPreset").value = "custom";
+    $("resolutionCustom").value = resolution;
+  }
+  updateCustomVisibility();
+}
 
-    // Set checkboxes
-    document.getElementById("openFolder").checked = items.openFolder;
-    document.getElementById("useOutro").checked = items.useOutro;
-    document.getElementById("requireOBS").checked = items.requireOBS;
+function getResolution() {
+  var preset = $("resolutionPreset").value;
+  return preset === "custom" ? $("resolutionCustom").value.trim() : preset;
+}
+
+function updateCustomVisibility() {
+  $("resolutionCustom").hidden = $("resolutionPreset").value !== "custom";
+}
+
+function setServers(servers) {
+  GOEXPORT_SERVER_KEYS.forEach(function (key) {
+    $("server_" + key).value = servers[key];
   });
 }
 
-// Save settings to Chrome storage
+function showStatus(message, isError) {
+  var status = $("status");
+  status.textContent = message;
+  status.classList.toggle("error", !!isError);
+  status.style.opacity = "1";
+  clearTimeout(showStatus.timer);
+  showStatus.timer = setTimeout(
+    function () {
+      status.style.opacity = "0";
+    },
+    isError ? 5000 : 2000
+  );
+}
+
+function loadSettings() {
+  chrome.storage.sync.get(GOEXPORT_DEFAULT_SETTINGS, function (items) {
+    setResolution(items.videoResolution);
+    $("videoFormat").value = items.videoFormat;
+    $("wideMode").value = items.wideMode;
+    $("useOutro").checked = items.useOutro;
+    setServers(GoExport.servers(items));
+  });
+}
+
 function saveSettings() {
-  const settings = {
-    aspectRatio: document.getElementById("aspectRatio").value,
-    resolution: document.getElementById("resolution").value,
-    openFolder: document.getElementById("openFolder").checked,
-    useOutro: document.getElementById("useOutro").checked,
-    requireOBS: document.getElementById("requireOBS").checked,
+  var resolution = getResolution();
+  if (!GoExport.isValidResolution(resolution)) {
+    showStatus(
+      "Resolution must be WIDTHxHEIGHT, each between 1 and 16384.",
+      true
+    );
+    return;
+  }
+
+  var servers = {};
+  for (var i = 0; i < GOEXPORT_SERVER_KEYS.length; i++) {
+    var key = GOEXPORT_SERVER_KEYS[i];
+    var value = $("server_" + key).value.trim();
+    if (value && !GoExport.isValidServerUrl(value)) {
+      showStatus(key + " must be an http:// or https:// URL with no spaces.", true);
+      return;
+    }
+    servers[key] = value;
+  }
+
+  var settings = {
+    videoResolution: resolution,
+    videoFormat: $("videoFormat").value,
+    wideMode: $("wideMode").value,
+    useOutro: $("useOutro").checked,
+    ftServers: servers,
   };
 
   chrome.storage.sync.set(settings, function () {
-    // Show success message
-    const status = document.getElementById("status");
-    status.textContent = "Settings saved!";
-    status.style.opacity = "1";
+    // Show the defaults in any field left blank.
+    setServers(GoExport.servers(settings));
+    showStatus("Settings saved!");
 
     // Reload all FlashThemes movie tabs to apply new settings
     chrome.tabs.query({ url: "*://flashthemes.net/movie/*" }, function (tabs) {
@@ -115,26 +101,16 @@ function saveSettings() {
         chrome.tabs.reload(tab.id);
       });
     });
-
-    // Fade out after 2 seconds
-    setTimeout(function () {
-      status.style.opacity = "0";
-    }, 2000);
   });
 }
 
-// Initialize when page loads
 document.addEventListener("DOMContentLoaded", function () {
   loadSettings();
 
-  // Add save button click handler
-  document.getElementById("save").addEventListener("click", saveSettings);
-
-  // Listen for aspect ratio changes to update resolution options
-  document
-    .getElementById("aspectRatio")
-    .addEventListener("change", function () {
-      const currentResolution = document.getElementById("resolution").value;
-      updateResolutionOptions(this.value, currentResolution);
-    });
+  $("save").addEventListener("click", saveSettings);
+  $("resolutionPreset").addEventListener("change", updateCustomVisibility);
+  $("resetServers").addEventListener("click", function () {
+    setServers(GOEXPORT_FLASHTHEMES_SERVERS);
+    showStatus("Servers reset. Click Save to keep them.");
+  });
 });

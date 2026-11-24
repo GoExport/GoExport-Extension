@@ -30,19 +30,13 @@ The extension requires GoExport desktop app installed with `goexport://` protoco
 
 ### Settings Management Pattern
 
-Settings use **Chrome's sync storage** (`chrome.storage.sync`) with a centralized default structure:
+`goexport.js` is loaded by both the content script (see `manifest.json`) and the options page. It holds the single source of truth:
 
-```javascript
-const DEFAULT_SETTINGS = {
-  aspectRatio: "16:9",
-  resolution: "720p",
-  openFolder: false,
-  useOutro: true,
-};
-```
+- `GOEXPORT_FLASHTHEMES_SERVERS`: server settings copied from GoExport's FlashThemes preset
+- `GOEXPORT_DEFAULT_SETTINGS`: `videoResolution` (`WIDTHxHEIGHT`), `videoFormat` (`mp4`/`mov`/`mkv`), `wideMode` (`auto`/`on`/`off`), `useOutro`, `ftServers`
+- `GoExport.buildRecordUrl()`: validates everything and builds the `goexport://record?...` link
 
-- When adding settings: Update `DEFAULT_SETTINGS` in `options.js` and `chrome.storage.sync.get()` calls in `ft/player.js`
-- Settings changes trigger tab reloads: `chrome.tabs.query()` finds all FlashThemes tabs and reloads them
+Settings live in `chrome.storage.sync`. Saving reloads all FlashThemes movie tabs.
 
 ### Content Script Injection Strategy
 
@@ -54,22 +48,26 @@ const DEFAULT_SETTINGS = {
    - Export button: Launches `goexport://` URL with query params
    - Settings button: Sends message to background script to open options
 
-### Dynamic Resolution Options
+### URL Construction for GoExport (v2 protocol)
 
-Resolution options in `options.js` are **aspect-ratio dependent** (matches GoExport's Wrapper: Offline). When aspect ratio changes, `updateResolutionOptions()` repopulates the dropdown and attempts to preserve the current selection or defaults to 720p.
-
-### URL Construction for GoExport
-
-The `launchGoExport()` function builds URLs like:
+See https://github.com/GoExport/GoExport/wiki/URL%E2%80%90Protocol. Example:
 
 ```
-goexport://?video_id=X&user_id=Y&service=ft&no_input=1&aspect_ratio=16:9&resolution=720p&open_folder=0&use_outro=1
+goexport://record?movie_id=X&user_id=Y&format=mp4&resolution=1280x720&wide=true&outro=true&url=...&api_url=...&swf_url=...&store_path=...&client_theme_path=...
 ```
 
-All parameters are URL-encoded. `service=ft` identifies FlashThemes as the source.
+GoExport rejects the whole link if any parameter is unknown, repeated or invalid, so never add parameters outside that list. All values are URL-encoded.
+
+## Branches
+
+- `2.x` (default): GoExport v2. Tags `v2.x.x`.
+- `1.x`: GoExport v1 (old `goexport://?video_id=...` links). Tags `v1.x.x`.
+
+The release workflow refuses to build a tag that isn't on its major version's branch.
 
 ## Key Files
 
+- **`goexport.js`**: Shared defaults, validation and URL building
 - **`ft/player.js`**: Core injection logic; modify to change button behavior or data extraction
 - **`options.js`**: Settings UI logic; `DEFAULT_SETTINGS` object is the single source of truth
 - **`manifest.json`**: Manifest V2 format; `content_scripts.matches` controls injection targets
@@ -79,11 +77,10 @@ All parameters are URL-encoded. `service=ft` identifies FlashThemes as the sourc
 
 ### Adding a New Setting
 
-1. Add to `DEFAULT_SETTINGS` in `options.js`
+1. Add to `GOEXPORT_DEFAULT_SETTINGS` in `goexport.js`
 2. Add UI elements in `options.html` (follow existing `.setting-item` structure)
 3. Update `loadSettings()` and `saveSettings()` in `options.js`
-4. Update `chrome.storage.sync.get()` default object in `ft/player.js`
-5. Pass new setting through `createGoExportButton()` and use in `launchGoExport()`
+4. Use it in `GoExport.buildRecordUrl()` (only if the protocol accepts it)
 
 ### Changing Target Website
 
@@ -91,7 +88,7 @@ Modify `manifest.json` → `content_scripts[0].matches` array. If not FlashTheme
 
 ### Debugging Extension Issues
 
-- Check console logs: `GatherVariables()` logs extracted data, `launchGoExport()` logs the final URL
+- Check console logs: `GatherVariables()` logs extracted data, `launchGoExport()` logs the final URL (or alerts the validation error)
 - Verify button injection: Look for elements with IDs `goexport_integration_button` and `goexport_settings_button`
 - Test settings persistence: Open DevTools → Application → Storage → Extension storage
 
